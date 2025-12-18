@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import morgan from 'morgan';
 import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
 
 import {dirname} from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,8 +12,8 @@ import './models/index.js';
 
 import Routes from './routes/index.js';
 import {sequelize} from './config/postgres.js';
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const openapiSpec = JSON.parse(fs.readFileSync(path.join(__dirname, './docs/openapi.json'), 'utf-8'));
 
 const app = express();
 
@@ -30,9 +31,13 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions));
+app.use(express.json());
 app.use(morgan('combined', { stream: logStream }));
-app.use(express.json({limit: '50mb'})); //tamanho do corpo
-app.use(express.urlencoded({extended: true, limit: '50mb'})); //tamanho da rota 
+app.use(express.json({limit: '50mb'})); 
+app.use(express.urlencoded({extended: true, limit: '50mb'})); 
+
+// Swagger UI
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapiSpec));
 
 Routes(app);
 app.use((req, res) => {
@@ -41,12 +46,16 @@ app.use((req, res) => {
 
 sequelize.authenticate()
     .then(() => {
-        console.log('deu boa');
+        console.log('conectou');
     });
+    
+export default app;
 
-app.listen(process.env.API_PORT, (e) => {
-    if(e) {
-        return console.log(e);
-    }
-    console.log(`rodando na url http://localhost:${process.env.API_PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(process.env.API_PORT, (e) => {
+        if(e) {
+            return console.log(e);
+        }
+        console.log(`rodando na url http://localhost:${process.env.API_PORT}`);
+    });
+}

@@ -1,0 +1,262 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Biblioteca API",
+    "version": "1.0.0",
+    "description": "API de gerenciamento de biblioteca: autenticação, usuários, livros, empréstimos e parâmetros do sistema."
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "Local" }
+  ],
+  "tags": [
+    { "name": "Auth" },
+    { "name": "Users" },
+    { "name": "Admin" },
+    { "name": "Profiles" },
+    { "name": "Sectors" },
+    { "name": "Shelves" },
+    { "name": "Genres" },
+    { "name": "Books" },
+    { "name": "Loans" },
+    { "name": "SystemParam" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "data": { "type": "object" }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "token": { "type": "string" },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "integer" },
+              "name": { "type": "string" },
+              "role": { "type": "string" }
+            }
+          }
+        }
+      },
+      "Profile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "Sector": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "Shelf": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "code": { "type": "string" },
+          "sectorId": { "type": "integer" }
+        }
+      },
+      "Genre": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" }
+        }
+      },
+      "Book": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "title": { "type": "string" },
+          "isbn": { "type": "string" },
+          "available": { "type": "boolean" },
+          "replacementPrice": { "type": "number" },
+          "genreId": { "type": "integer" },
+          "shelfId": { "type": "integer" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "active": { "type": "boolean" },
+          "profileId": { "type": "integer" }
+        }
+      },
+      "Loan": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "userId": { "type": "integer" },
+          "bookId": { "type": "integer" },
+          "loanDate": { "type": "string", "format": "date" },
+          "dueDate": { "type": "string", "format": "date" },
+          "returnDate": { "type": "string", "format": "date" },
+          "status": { "type": "string", "enum": ["OPEN", "LATE", "RETURNED"] },
+          "totalAmount": { "type": "string" }
+        }
+      },
+      "SystemParam": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "finePerDay": { "type": "number" },
+          "baseRent": { "type": "number" },
+          "rentPerDay": { "type": "number" },
+          "standardLoanDays": { "type": "integer" },
+          "firstDelayDiscount": { "type": "number" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login e obtenção de token",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "Sucesso", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginResponse" } } } },
+          "401": { "description": "Credenciais inválidas" }
+        }
+      }
+    },
+    "/profile": {
+      "get": { "tags": ["Profiles"], "summary": "Listar perfis", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Profiles"], "summary": "Criar perfil", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Profile" } } } }, "responses": { "201": { "description": "Criado" } } }
+    },
+    "/profile/{id}": {
+      "get": { "tags": ["Profiles"], "summary": "Obter perfil", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["Profiles"], "summary": "Atualizar perfil", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Profile" } } } }, "responses": { "200": { "description": "Atualizado" } } },
+      "delete": { "tags": ["Profiles"], "summary": "Excluir perfil", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/sector": {
+      "get": { "tags": ["Sectors"], "summary": "Listar setores", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Sectors"], "summary": "Criar setor", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Sector" } } } }, "responses": { "201": { "description": "Criado" } } }
+    },
+    "/sector/{id}": {
+      "get": { "tags": ["Sectors"], "summary": "Obter setor", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["Sectors"], "summary": "Atualizar setor", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Atualizado" } } },
+      "delete": { "tags": ["Sectors"], "summary": "Excluir setor", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/genre": {
+      "get": { "tags": ["Genres"], "summary": "Listar gêneros", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Genres"], "summary": "Criar gênero", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Genre" } } } }, "responses": { "201": { "description": "Criado" } } }
+    },
+    "/genre/{id}": {
+      "get": { "tags": ["Genres"], "summary": "Obter gênero", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["Genres"], "summary": "Atualizar gênero", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Atualizado" } } },
+      "delete": { "tags": ["Genres"], "summary": "Excluir gênero", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/shelf": {
+      "get": { "tags": ["Shelves"], "summary": "Listar prateleiras", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Shelves"], "summary": "Criar prateleira", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Shelf" } } } }, "responses": { "201": { "description": "Criado" } } }
+    },
+    "/shelf/{id}": {
+      "get": { "tags": ["Shelves"], "summary": "Obter prateleira", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["Shelves"], "summary": "Atualizar prateleira", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Atualizado" } } },
+      "delete": { "tags": ["Shelves"], "summary": "Excluir prateleira", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/book": {
+      "get": { "tags": ["Books"], "summary": "Listar livros", "responses": { "200": { "description": "OK" } } },
+      "post": { "tags": ["Books"], "summary": "Criar livro (admin)", "security": [{ "bearerAuth": [] }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Book" } } } }, "responses": { "201": { "description": "Criado" }, "401": { "description": "Não autorizado" } } }
+    },
+    "/book/{id}": {
+      "get": { "tags": ["Books"], "summary": "Obter livro", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["Books"], "summary": "Atualizar livro (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Atualizado" }, "401": { "description": "Não autorizado" } } },
+      "delete": { "tags": ["Books"], "summary": "Excluir livro (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "401": { "description": "Não autorizado" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/book/{id}/location": {
+      "get": { "tags": ["Books"], "summary": "Localização do livro (setor/prateleira)", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/users": {
+      "post": { "tags": ["Users"], "summary": "Criar leitor", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "responses": { "201": { "description": "Criado" } } },
+      "get": { "tags": ["Admin"], "summary": "Listar usuários (admin)", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "OK" }, "401": { "description": "Não autorizado" } } }
+    },
+    "/users/{id}": {
+      "get": { "tags": ["Users"], "summary": "Obter usuário", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["Admin"], "summary": "Atualizar usuário (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Atualizado" }, "401": { "description": "Não autorizado" } } },
+      "delete": { "tags": ["Admin"], "summary": "Excluir usuário (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "401": { "description": "Não autorizado" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/admin/users": {
+      "post": { "tags": ["Admin"], "summary": "Criar admin", "security": [{ "bearerAuth": [] }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "responses": { "201": { "description": "Criado" }, "401": { "description": "Não autorizado" } } }
+    },
+    "/system-param": {
+      "get": { "tags": ["SystemParam"], "summary": "Listar parâmetros (admin)", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "OK" }, "401": { "description": "Não autorizado" } } },
+      "post": { "tags": ["SystemParam"], "summary": "Criar parâmetros (admin)", "security": [{ "bearerAuth": [] }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SystemParam" } } } }, "responses": { "201": { "description": "Criado" }, "401": { "description": "Não autorizado" } } }
+    },
+    "/system-param/{id}": {
+      "get": { "tags": ["SystemParam"], "summary": "Obter parâmetro (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["SystemParam"], "summary": "Atualizar parâmetro (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Atualizado" }, "401": { "description": "Não autorizado" } } },
+      "delete": { "tags": ["SystemParam"], "summary": "Excluir parâmetro (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "401": { "description": "Não autorizado" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/loans": {
+      "get": { "tags": ["Loans"], "summary": "Listar empréstimos (token)", "security": [{ "bearerAuth": [] }], "responses": { "200": { "description": "OK" }, "401": { "description": "Não autorizado" } } },
+      "post": { "tags": ["Loans"], "summary": "Criar empréstimo (token)", "security": [{ "bearerAuth": [] }], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Loan" } } } }, "responses": { "201": { "description": "Criado" }, "401": { "description": "Não autorizado" } } }
+    },
+    "/loans/{id}": {
+      "get": { "tags": ["Loans"], "summary": "Obter empréstimo (token)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } },
+      "patch": { "tags": ["Loans"], "summary": "Atualizar empréstimo (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Atualizado" }, "401": { "description": "Não autorizado" } } },
+      "delete": { "tags": ["Loans"], "summary": "Excluir empréstimo (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "Excluído" }, "401": { "description": "Não autorizado" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/loans/{id}/preview": {
+      "get": { "tags": ["Loans"], "summary": "Preview valores (token)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/loans/{id}/fine": {
+      "get": { "tags": ["Loans"], "summary": "Calcular multa (token)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/loans/{id}/rental": {
+      "get": { "tags": ["Loans"], "summary": "Calcular aluguel (token)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "404": { "description": "Não encontrado" } } }
+    },
+    "/loans/{id}/return": {
+      "post": { "tags": ["Loans"], "summary": "Devolver livro (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "401": { "description": "Não autorizado" } } }
+    },
+    "/loans/{id}/discount": {
+      "patch": { "tags": ["Loans"], "summary": "Aplicar desconto 1º atraso (admin)", "security": [{ "bearerAuth": [] }], "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "responses": { "200": { "description": "OK" }, "401": { "description": "Não autorizado" }, "400": { "description": "Não elegível" } } }
+    }
+    ,
+    "/loans/overdue": {
+      "get": {
+        "tags": ["Loans"],
+        "summary": "Listar empréstimos atrasados (admin)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "OK" },
+          "401": { "description": "Não autorizado" }
+        }
+      }
+    }
+  }
+}
